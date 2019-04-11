@@ -1,6 +1,6 @@
-FROM alpine:3.8
+FROM alpine:3.9
 
-ARG PEERTUBE_VER=v1.1.0
+ARG PEERTUBE_VER=v1.2.1
 
 WORKDIR /var/www/peertube
 RUN adduser -h /var/www/peertube -s /bin/sh -D peertube && \

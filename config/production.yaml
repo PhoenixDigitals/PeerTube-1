@@ -2,7 +2,7 @@ listen:
   hostname: '0.0.0.0'
   port: 9000
 
-# Correspond to your reverse proxy "listen" configuration
+# Correspond to your reverse proxy server_name/listen configuration
 webserver:
   https: true
   hostname: 'example.com'
@@ -46,8 +46,11 @@ smtp:
 
 # From the project root directory
 storage:
+  tmp: '/var/www/peertube/storage/tmp/' # Used to download data (imports etc), store uploaded files before processing...
   avatars: '../data/avatars/'
   videos: '../data/videos/'
+  streaming_playlists: '/var/www/peertube/storage/streaming-playlists/'
+  redundancy: '/var/www/peertube/storage/videos/'
   logs: '../data/logs/'
   previews: '../data/previews/'
   thumbnails: '../data/thumbnails/'
@@ -76,7 +79,7 @@ trending:
 redundancy:
   videos:
     check_interval: '1 hour' # How often you want to check new videos to cache
-    strategies:
+    strategies: # Just uncomment strategies you want
 #      -
 #        size: '10GB'
 #        # Minimum time the video must remain in the cache. Only accept values > 10 hours (to not overload remote instances)
@@ -94,6 +97,40 @@ redundancy:
 #        strategy: 'recently-added' # Cache recently added videos
 #        min_views: 10 # Having at least x views
 
+csp:
+  enabled: false
+  report_only: true # CSP directives are still being tested, so disable the report only mode at your own risk!
+  report_uri:
+
+tracker:
+  # If you disable the tracker, you disable the P2P aspect of PeerTube
+  enabled: true
+  # Only handle requests on your videos.
+  # If you set this to false it means you have a public tracker.
+  # Then, it is possible that clients overload your instance with external torrents
+  private: true
+  # Reject peers that do a lot of announces (could improve privacy of TCP/UDP peers)
+  reject_too_many_announces: false
+
+history:
+  videos:
+    # If you want to limit users videos history
+    # -1 means there is no limitations
+    # Other values could be '6 months' or '30 days' etc (PeerTube will periodically delete old entries from database)
+    max_age: -1
+
+###############################################################################
+#
+# From this point, all the following keys can be overridden by the web interface
+# (local-production.json file). If you need to change some values, prefer to
+# use the web interface because the configuration will be automatically
+# reloaded without any need to restart PeerTube.
+#
+# /!\ If you already have a local-production.json file, the modification of the
+# following keys will have no effect /!\.
+#
+###############################################################################
+
 cache:
   previews:
     size: 500 # Max number of previews you want to cache
@@ -101,7 +138,12 @@ cache:
     size: 500 # Max number of video captions/subtitles you want to cache
 
 admin:
-  email: 'admin@example.com' # Your personal email as administrator
+  # Used to generate the root user at first startup
+  # And to receive emails from the contact form
+  email: 'admin@example.com'
+
+contact_form:
+  enabled: true
 
 signup:
   enabled: false
@@ -123,6 +165,8 @@ user:
 # Please, do not disable transcoding since many uploaded videos will not work
 transcoding:
   enabled: true
+  # Allow your users to upload .mkv, .mov, .avi, .flv videos
+  allow_additional_extensions: true
   threads: 1
   resolutions: # Only created if the original video has a higher resolution, uses more storage!
     240p: false
@@ -130,6 +174,15 @@ transcoding:
     480p: false
     720p: false
     1080p: false
+  # /!\ EXPERIMENTAL /!\
+  # /!\ Requires ffmpeg >= 4
+  # Generate HLS playlists and fragmented MP4 files. Better playback than with WebTorrent:
+  #     * Resolution change is smoother
+  #     * Faster playback in particular with long videos
+  #     * More stable playback (less bugs/infinite loading)
+  # /!\ Multiply videos storage by 2 /!\
+  hls:
+    enabled: false
 
 import:
   # Add ability for your users to import remote videos (from YouTube, torrent...)
@@ -139,6 +192,12 @@ import:
     torrent: # Magnet URI or torrent file (use classic TCP/UDP/WebSeed to download the file)
       enabled: false
 
+auto_blacklist:
+  # New videos automatically blacklisted so moderators can review before publishing
+  videos:
+    of_users:
+      enabled: false
+
 # Instance settings
 instance:
   name: 'PeerTube'
@@ -146,6 +205,10 @@ instance:
   description: '' # Support markdown
   terms: '' # Support markdown
   default_client_route: '/videos/trending'
+  # Whether or not the instance is dedicated to NSFW content
+  # Enabling it will allow other administrators to know that you are mainly federating sensitive content
+  # Moreover, the NSFW checkbox on video upload will be automatically checked by default
+  is_nsfw: false
   # By default, "do_not_list" or "blur" or "display" NSFW videos
   # Could be overridden per user with a setting
   default_nsfw_policy: 'do_not_list'
@@ -155,12 +218,14 @@ instance:
   # Robot.txt rules. To disallow robots to crawl your instance and disallow indexation of your site, add '/' to "Disallow:'
   robots: |
     User-agent: *
-    Disallow: ''
+    Disallow:
   # Security.txt rules. To discourage researchers from testing your instance and disable security.txt integration, set this to an empty string.
   securitytxt:
     "# If you would like to report a security issue\n# you may report it to:\nContact: https://github.com/Chocobozzz/PeerTube/blob/develop/SECURITY.md\nContact: mailto:"
 
 services:
+  # You can provide a reporting endpoint for Content Security Policy violations
+  csp-logger:
   # Cards configuration to format video in Twitter
   twitter:
     username: '@Chocobozzz' # Indicates the Twitter account for the website or platform on which the content was published
@@ -168,3 +233,10 @@ services:
     # If false, we use an image link card that will redirect on your PeerTube instance
     # Test on https://cards-dev.twitter.com/validator to see if you are whitelisted
     whitelisted: false
+
+followers:
+  instance:
+    # Allow or not other instances to follow yours
+    enabled: true
+    # Whether or not an administrator must manually validate a new follower
+    manual_approval: false
