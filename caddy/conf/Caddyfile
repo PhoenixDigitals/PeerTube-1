@@ -6,6 +6,16 @@ http:///client/ {
                 Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
                 -Server
         }
+
+        rewrite / {path} /proxy{path}
+
+        proxy /proxy http://app:9000 {
+                without /proxy
+
+                transparent
+                websocket
+        }
+
 }
 
 http:///static/webseed/ {
