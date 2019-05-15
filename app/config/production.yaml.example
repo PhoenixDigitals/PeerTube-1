@@ -1,13 +1,12 @@
-# /!\ YOU SHOULD NOT UPDATE THIS FILE, USE production.yaml instead /!\ #
-
 listen:
-  hostname: '127.0.0.1'
+  hostname: '0.0.0.0'
   port: 9000
 
+# Correspond to your reverse proxy server_name/listen configuration
 webserver:
-  https: false
-  hostname: 'localhost'
-  port: 9000
+  https: true
+  hostname: 'example.com'
+  port: 443
 
 # Proxies to trust to get real client IP
 # If you run PeerTube just behind a local proxy (nginx), keep 'loopback'
@@ -17,45 +16,46 @@ trust_proxy:
 
 # Your database name will be "peertube"+database.suffix
 database:
-  hostname: 'localhost'
+  hostname: 'db'
   port: 5432
-  suffix: '_dev'
+  suffix: '_prod'
   username: 'peertube'
   password: 'peertube'
   pool:
     max: 5
 
+# Redis server for short time storage
 # You can also specify a 'socket' path to a unix socket but first need to
 # comment out hostname and port
 redis:
-  hostname: 'localhost'
+  hostname: 'redis'
   port: 6379
   auth: null
   db: 0
 
+# SMTP server to send emails
 smtp:
   hostname: null
-  port: 465
+  port: 465 # If you use StartTLS: 587
   username: null
   password: null
-  tls: true
+  tls: true # If you use StartTLS: false
   disable_starttls: false
   ca_file: null # Used for self signed certificates
   from_address: 'admin@example.com'
 
 # From the project root directory
 storage:
-  tmp: 'storage/tmp/' # Used to download data (imports etc), store uploaded files before processing...
-  avatars: 'storage/avatars/'
-  videos: 'storage/videos/'
-  streaming_playlists: 'storage/streaming-playlists/'
-  redundancy: 'storage/redundancy/'
-  logs: 'storage/logs/'
-  previews: 'storage/previews/'
-  thumbnails: 'storage/thumbnails/'
-  torrents: 'storage/torrents/'
-  captions: 'storage/captions/'
-  cache: 'storage/cache/'
+  tmp: '/var/www/peertube/storage/tmp/' # Used to download data (imports etc), store uploaded files before processing...
+  avatars: '/var/www/peertube/storage/avatars/'
+  videos: '/var/www/peertube/storage/videos/'
+  redundancy: '/var/www/peertube/storage/videos/'
+  logs: '/var/www/peertube/storage/logs/'
+  previews: '/var/www/peertube/storage/previews/'
+  thumbnails: '/var/www/peertube/storage/thumbnails/'
+  torrents: '/var/www/peertube/storage/torrents/'
+  captions: '/var/www/peertube/storage/captions/'
+  cache: '/var/www/peertube/storage/cache/'
 
 log:
   level: 'info' # debug/info/warning/error
@@ -96,27 +96,17 @@ redundancy:
 #        strategy: 'recently-added' # Cache recently added videos
 #        min_views: 10 # Having at least x views
 
-csp:
-  enabled: false
-  report_only: true # CSP directives are still being tested, so disable the report only mode at your own risk!
-  report_uri:
-
-tracker:
-  # If you disable the tracker, you disable the P2P aspect of PeerTube
-  enabled: true
-  # Only handle requests on your videos.
-  # If you set this to false it means you have a public tracker.
-  # Then, it is possible that clients overload your instance with external torrents
-  private: true
-  # Reject peers that do a lot of announces (could improve privacy of TCP/UDP peers)
-  reject_too_many_announces: false
-
-history:
-  videos:
-    # If you want to limit users videos history
-    # -1 means there is no limitations
-    # Other values could be '6 months' or '30 days' etc (PeerTube will periodically delete old entries from database)
-    max_age: -1
+###############################################################################
+#
+# From this point, all the following keys can be overridden by the web interface
+# (local-production.json file). If you need to change some values, prefer to
+# use the web interface because the configuration will be automatically
+# reloaded without any need to restart PeerTube.
+#
+# /!\ If you already have a local-production.json file, the modification of the
+# following keys will have no effect /!\.
+#
+###############################################################################
 
 cache:
   previews:
@@ -161,15 +151,6 @@ transcoding:
     480p: false
     720p: false
     1080p: false
-  # /!\ EXPERIMENTAL /!\
-  # /!\ Requires ffmpeg >= 4
-  # Generate HLS playlists and fragmented MP4 files. Better playback than with WebTorrent:
-  #     * Resolution change is smoother
-  #     * Faster playback in particular with long videos
-  #     * More stable playback (less bugs/infinite loading)
-  # /!\ Multiply videos storage by 2 /!\
-  hls:
-    enabled: false
 
 import:
   # Add ability for your users to import remote videos (from YouTube, torrent...)
@@ -179,22 +160,13 @@ import:
     torrent: # Magnet URI or torrent file (use classic TCP/UDP/WebSeed to download the file)
       enabled: false
 
-auto_blacklist:
-  # New videos automatically blacklisted so moderators can review before publishing
-  videos:
-    of_users:
-      enabled: false
-
+# Instance settings
 instance:
   name: 'PeerTube'
   short_description: 'PeerTube, a federated (ActivityPub) video streaming platform using P2P (BitTorrent) directly in the web browser with WebTorrent and Angular.'
-  description: 'Welcome to this PeerTube instance!' # Support markdown
-  terms: 'No terms for now.' # Support markdown
+  description: '' # Support markdown
+  terms: '' # Support markdown
   default_client_route: '/videos/trending'
-  # Whether or not the instance is dedicated to NSFW content
-  # Enabling it will allow other administrators to know that you are mainly federating sensitive content
-  # Moreover, the NSFW checkbox on video upload will be automatically checked by default
-  is_nsfw: false
   # By default, "do_not_list" or "blur" or "display" NSFW videos
   # Could be overridden per user with a setting
   default_nsfw_policy: 'do_not_list'
@@ -210,17 +182,12 @@ instance:
     "# If you would like to report a security issue\n# you may report it to:\nContact: https://github.com/Chocobozzz/PeerTube/blob/develop/SECURITY.md\nContact: mailto:"
 
 services:
+  # You can provide a reporting endpoint for Content Security Policy violations
+  csp-logger:
   # Cards configuration to format video in Twitter
   twitter:
     username: '@Chocobozzz' # Indicates the Twitter account for the website or platform on which the content was published
     # If true, a video player will be embedded in the Twitter feed on PeerTube video share
     # If false, we use an image link card that will redirect on your PeerTube instance
-    # Change it to "true", and then test on https://cards-dev.twitter.com/validator to see if you are whitelisted
+    # Test on https://cards-dev.twitter.com/validator to see if you are whitelisted
     whitelisted: false
-
-followers:
-  instance:
-    # Allow or not other instances to follow yours
-    enabled: true
-    # Whether or not an administrator must manually validate a new follower
-    manual_approval: false

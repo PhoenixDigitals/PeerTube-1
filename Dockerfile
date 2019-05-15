@@ -14,18 +14,17 @@ RUN apk -U upgrade && \
     su peertube -c 'curl -sL "https://github.com/Chocobozzz/PeerTube/releases/download/$PEERTUBE_VER/peertube-$PEERTUBE_VER.zip" > peertube-$PEERTUBE_VER.zip && \
     unzip -q peertube-$PEERTUBE_VER.zip && \
     rm peertube-$PEERTUBE_VER.zip && \
-    mv peertube-$PEERTUBE_VER peertube-latest && \
-    cd peertube-latest && \
+    mv peertube-$PEERTUBE_VER/* . && \
+    rmdir peertube-$PEERTUBE_VER && \
     yarn install --production --pure-lockfile && \
     yarn cache clean' && \
     apk del .dep && \
     rm -rf /tmp/* /var/cache/apk/*
 
 USER peertube
-WORKDIR /var/www/peertube/peertube-latest
 
 ENV NODE_ENV=production
-ENV NODE_CONFIG_DIR=/config
-VOLUME [ "/config", "/storage" ]
+ENV NODE_CONFIG_DIR=/var/www/peertube/config
+VOLUME [ "/storage" ]
 
 CMD [ "/usr/bin/npm", "start" ]
