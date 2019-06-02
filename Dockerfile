@@ -1,4 +1,4 @@
-FROM alpine:3.9
+FROM node:10-alpine
 
 ARG PEERTUBE_VER=v1.3.0-rc.2
 
@@ -7,7 +7,7 @@ RUN adduser -h /var/www/peertube -s /bin/sh -D peertube && \
     chown peertube:peertube /var/www/peertube
 
 RUN apk -U upgrade && \
-    apk add ca-certificates ffmpeg nodejs nodejs-npm openssl yarn && \
+    apk add ca-certificates ffmpeg openssl && \
     apk add -U vips-dev fftw-dev --repository http://dl-cdn.alpinelinux.org/alpine/edge/community/ && \
     update-ca-certificates && \
     apk add --virt .dep curl git g++ python make unzip && \
@@ -27,4 +27,4 @@ ENV NODE_ENV=production
 ENV NODE_CONFIG_DIR=/var/www/peertube/config
 VOLUME [ "/storage" ]
 
-CMD [ "/usr/bin/npm", "start" ]
+CMD [ "npm", "start" ]
