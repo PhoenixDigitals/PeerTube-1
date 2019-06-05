@@ -1,6 +1,6 @@
 FROM node:10-alpine
 
-ARG PEERTUBE_VER=v1.3.0-rc.2
+ARG PEERTUBE_VER=v1.3.0
 
 WORKDIR /var/www/peertube
 RUN adduser -h /var/www/peertube -s /bin/sh -D peertube && \
